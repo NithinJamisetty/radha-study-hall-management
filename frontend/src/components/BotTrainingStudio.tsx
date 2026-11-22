@@ -139,12 +139,15 @@ Have a wonderful evening ahead! 🌸`);
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center justify-center flex-shrink-0 z-10">
-          <img 
-            src="/images/study2.png" 
-            alt="Report Training" 
-            className="w-36 sm:w-44 object-contain drop-shadow"
-          />
+        <div className="hidden sm:flex flex-col items-center justify-center flex-shrink-0 z-10 bg-emerald-50/80 border border-emerald-100 p-4 rounded-3xl text-center space-y-2">
+          <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-300 shadow-xs bg-white p-0.5">
+            <img 
+              src="/images/avatar_girl_3d.png" 
+              alt="Radha Study Hall Mascot" 
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+          <span className="text-[11px] font-bold text-emerald-950">WhatsApp Auto-Sync</span>
         </div>
       </div>
 

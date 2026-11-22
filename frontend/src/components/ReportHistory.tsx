@@ -47,12 +47,8 @@ export const ReportHistory: React.FC = () => {
       {/* Visual Header */}
       <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-slate-50 border border-emerald-200/70 rounded-3xl flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-200/80 p-2 flex items-center justify-center flex-shrink-0 shadow-xs">
-            <img 
-              src="/images/study3.png" 
-              alt="Radha Study Hall Archive" 
-              className="w-full h-full object-contain"
-            />
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center flex-shrink-0 shadow-xs text-emerald-600">
+            <FileText className="w-7 h-7" />
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold mb-1">

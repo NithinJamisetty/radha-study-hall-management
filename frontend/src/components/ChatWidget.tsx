@@ -97,32 +97,32 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
       desc: "5 students joined today",
       prompt: "Today 5 new students joined.",
       icon: Users,
-      img: "/images/avatar_boy_3d.png",
-      color: "from-emerald-500/10 to-teal-500/10 border-emerald-200/80 text-emerald-800"
+      color: "from-emerald-50 to-teal-50 border-emerald-200/80 text-emerald-800",
+      iconColor: "bg-emerald-100 text-emerald-700"
     },
     {
       title: "Fee Collection",
       desc: "₹12,500 from 12 students",
       prompt: "Collected fees from 12 students with ₹12,500 total.",
       icon: IndianRupee,
-      img: "/images/dash_seat_management.png",
-      color: "from-teal-500/10 to-sky-500/10 border-teal-200/80 text-teal-800"
+      color: "from-teal-50 to-sky-50 border-teal-200/80 text-teal-800",
+      iconColor: "bg-teal-100 text-teal-700"
     },
     {
       title: "Shift Attendance",
       desc: "Evening shift turnout: 85",
       prompt: "Evening shift attendance was 85.",
       icon: Clock,
-      img: "/images/checking_seats.png",
-      color: "from-sky-500/10 to-indigo-500/10 border-sky-200/80 text-sky-800"
+      color: "from-sky-50 to-indigo-50 border-sky-200/80 text-sky-800",
+      iconColor: "bg-sky-100 text-sky-700"
     },
     {
       title: "AC / Maintenance",
       desc: "Room 2 AC complaint",
       prompt: "AC in Room 2 is not working.",
       icon: Wrench,
-      img: "/images/ac_icon.png",
-      color: "from-amber-500/10 to-rose-500/10 border-amber-200/80 text-amber-800"
+      color: "from-amber-50 to-rose-50 border-amber-200/80 text-amber-800",
+      iconColor: "bg-amber-100 text-amber-700"
     }
   ];
 
@@ -170,18 +170,17 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-gradient-to-b from-slate-50/70 via-white to-slate-50/40">
         
-        {/* Welcome Banner with 3D Illustration (shows when starting chat) */}
+        {/* Welcome Banner (shows when starting chat) */}
         {messages.length <= 2 && (
-          <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-sky-500/10 border border-emerald-200/70 flex flex-col sm:flex-row items-center gap-5 shadow-xs">
-            <img 
-              src="/images/3d_characters.png" 
-              alt="Radha Study Hall 3D Characters"
-              className="w-28 sm:w-36 object-contain flex-shrink-0 drop-shadow-sm"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-            <div className="space-y-1.5 text-center sm:text-left flex-1">
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-sky-500/10 border border-emerald-200/70 flex flex-col sm:flex-row items-center gap-4 shadow-xs">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-sm flex-shrink-0 bg-white p-0.5">
+              <img 
+                src="/images/avatar_girl_3d.png" 
+                alt="Radha Study Hall AI Mascot"
+                className="w-full h-full object-cover rounded-xl"
+              />
+            </div>
+            <div className="space-y-1 text-center sm:text-left flex-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-white/80 rounded-full text-[11px] font-bold text-emerald-700 border border-emerald-200/60">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
                 Study Hall Operations Center
@@ -196,7 +195,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
           </div>
         )}
 
-        {/* 4 Interactive Visual Prompt Cards */}
+        {/* 4 Interactive Visual Prompt Cards (Single Clean Icon per Card) */}
         {messages.length <= 2 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {sampleActionCards.map((card, i) => {
@@ -205,19 +204,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                 <button
                   key={i}
                   onClick={() => handleSend(card.prompt)}
-                  className={`p-3 rounded-2xl bg-gradient-to-br ${card.color} border text-left transition-all hover:scale-[1.02] hover:shadow-xs flex flex-col justify-between group cursor-pointer`}
+                  className={`p-3.5 rounded-2xl bg-gradient-to-br ${card.color} border text-left transition-all hover:scale-[1.02] hover:shadow-xs flex flex-col justify-between group cursor-pointer`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-7 h-7 rounded-lg bg-white/90 flex items-center justify-center shadow-xs">
-                      <Icon className="w-4 h-4 text-emerald-700" />
-                    </div>
-                    {card.img && (
-                      <img 
-                        src={card.img} 
-                        alt={card.title} 
-                        className="w-7 h-7 object-contain opacity-90 group-hover:scale-110 transition-transform" 
-                      />
-                    )}
+                  <div className={`w-8 h-8 rounded-xl ${card.iconColor} flex items-center justify-center shadow-xs mb-2.5`}>
+                    <Icon className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="font-bold text-xs text-slate-900">{card.title}</div>
