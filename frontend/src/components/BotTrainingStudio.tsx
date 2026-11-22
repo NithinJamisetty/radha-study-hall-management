@@ -119,27 +119,39 @@ Have a wonderful evening ahead! 🌸`);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
-      {/* Studio Header: Clean, Simple & Cohesive */}
-      <div className="p-6 sm:p-7 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold mb-2 border border-emerald-200/50">
+      {/* Studio Header: Illustrated with Radha Study Hall Mascot */}
+      <div className="p-6 sm:p-7 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="space-y-2 max-w-xl z-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/50">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             AI Bot Guidance &amp; Training
           </div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Report Format Studio</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Guide the AI on how the 8:00 PM WhatsApp report should be formatted. Click tags to insert dynamic numbers.
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Radha Study Hall Report Studio
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Guide the AI assistant on how your 8:00 PM WhatsApp group report should look. Customize sections, greetings, and click dynamic tags to insert live numbers.
           </p>
+
+          <div className="pt-2">
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            >
+              {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {savedSuccess ? "Saved & Trained!" : "Save & Train Bot"}
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all"
-        >
-          {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {savedSuccess ? "Saved & Trained!" : "Save & Train Bot"}
-        </button>
+        <div className="hidden sm:flex items-center justify-center flex-shrink-0 z-10">
+          <img 
+            src="/images/study2.png" 
+            alt="Report Training" 
+            className="w-36 sm:w-44 object-contain drop-shadow"
+          />
+        </div>
       </div>
 
       {/* Preset Selectors */}
@@ -147,19 +159,19 @@ Have a wonderful evening ahead! 🌸`);
         <span className="text-xs text-slate-400 font-semibold mr-1">Load Preset Layout:</span>
         <button
           onClick={() => loadPreset('classic')}
-          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
         >
           Classic Numbered
         </button>
         <button
           onClick={() => loadPreset('minimal')}
-          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
         >
           Compact Minimalist
         </button>
         <button
           onClick={() => loadPreset('polite')}
-          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+          className="px-3 py-1.5 bg-white border border-slate-200/80 hover:border-emerald-300 rounded-xl text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
         >
           Warm &amp; Professional
         </button>
@@ -215,21 +227,30 @@ Have a wonderful evening ahead! 🌸`);
           </div>
         </div>
 
-        {/* Live WhatsApp Bubble Preview */}
+        {/* Live WhatsApp Bubble Preview with Mascot */}
         <div className="p-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <MessageCircle className="w-4 h-4 text-emerald-600 fill-current" />
-                Live WhatsApp Message Simulation
-              </span>
+              <div className="flex items-center gap-2.5">
+                <img 
+                  src="/images/avatar_girl_3d.png" 
+                  alt="Radha Study Hall"
+                  className="w-8 h-8 rounded-full object-cover border border-emerald-200"
+                />
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block leading-tight">
+                    Radha Study Hall WhatsApp Simulation
+                  </span>
+                  <span className="text-[10px] text-emerald-600 font-semibold">Live Group Preview</span>
+                </div>
+              </div>
               <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2 py-0.5 rounded-full font-semibold">
                 8:00 PM Preview
               </span>
             </div>
 
             {/* WhatsApp Chat Bubble */}
-            <div className="p-5 bg-[#dcf8c6]/40 border border-emerald-200/60 text-slate-900 rounded-3xl rounded-tr-xs shadow-xs text-xs font-sans leading-relaxed whitespace-pre-wrap max-h-[380px] overflow-y-auto">
+            <div className="p-5 bg-[#e7f7ee]/60 border border-emerald-200/70 text-slate-900 rounded-3xl rounded-tr-xs shadow-xs text-xs font-sans leading-relaxed whitespace-pre-wrap max-h-[380px] overflow-y-auto">
               {previewRendered}
               <div className="text-right text-[10px] text-emerald-700 mt-2 font-mono">
                 8:00 PM ✓✓

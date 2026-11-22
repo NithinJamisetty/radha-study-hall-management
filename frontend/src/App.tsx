@@ -95,9 +95,16 @@ export default function App() {
         {/* Top Navbar */}
         <header className="h-14 sm:h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center gap-3">
-            {/* Mobile Brand Logo */}
-            <div className="lg:hidden w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
-              <Sparkles className="w-4 h-4" />
+            {/* Mobile & Tablet Brand Mascot */}
+            <div className="lg:hidden relative">
+              <div className="w-9 h-9 rounded-2xl bg-emerald-100 border border-emerald-300 p-0.5 overflow-hidden shadow-xs flex items-center justify-center">
+                <img 
+                  src="/images/avatar_girl_3d.png" 
+                  alt="Radha Study Hall"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">

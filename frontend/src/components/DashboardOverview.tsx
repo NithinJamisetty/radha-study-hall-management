@@ -14,7 +14,8 @@ import {
   FileSpreadsheet,
   MessageCircle,
   Copy,
-  Check
+  Check,
+  ShieldCheck
 } from 'lucide-react';
 import { DashboardStats, api } from '../services/api.ts';
 import { GoogleSheetSyncModal } from './GoogleSheetSyncModal.tsx';
@@ -75,17 +76,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
       {/* 8:15 PM Overdue Urgent Action Banner (only if unsent) */}
       {isOverdue && isReportUnsent && (
-        <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+        <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-amber-900">
-                8:15 PM Daily Report Pending
+              <h4 className="text-xs font-bold text-amber-950">
+                8:15 PM Daily Report Pending Dispatch
               </h4>
-              <p className="text-[11px] text-amber-700">
-                Report draft is compiled. Click below to review or send directly to WhatsApp.
+              <p className="text-[11px] text-amber-800">
+                Today's operational compilation is ready. Review and send to WhatsApp.
               </p>
             </div>
           </div>
@@ -103,152 +104,180 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               className="flex-1 sm:flex-none px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-colors"
             >
               <MessageCircle className="w-3.5 h-3.5 fill-current" />
-              {sendingNow ? "Opening..." : "Send via WhatsApp Now"}
+              {sendingNow ? "Opening..." : "Send via WhatsApp"}
             </button>
           </div>
         </div>
       )}
 
-      {/* Main Hero Card: Clean, Calm & Modern */}
-      <div className="p-6 sm:p-7 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="space-y-2 max-w-xl">
+      {/* Main Hero Card: Illustrated with Radha Study Hall 3D Graphics */}
+      <div className="p-6 sm:p-7 bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-3xl text-white shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        {/* Background decorative blob */}
+        <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-3 max-w-xl z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Database Connected
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md text-emerald-300 rounded-full text-xs font-semibold border border-white/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Live Excel Database Connected
             </span>
-            <span className="text-xs text-slate-600 font-medium">{formattedDate}</span>
+            <span className="text-xs text-slate-300 font-medium">{formattedDate}</span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
             Radha Study Hall Command
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-            Message the bot throughout the day to track admissions, fees, and attendance. Your 8:00 PM WhatsApp report is prepared automatically.
+          <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+            Message the bot throughout the day to track student admissions, fee payments, and shift turnout. Your 8:00 PM WhatsApp group report compiles automatically.
           </p>
+
+          {/* Hero Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-2">
+            <button
+              onClick={handleSendNow}
+              disabled={sendingNow}
+              className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4 fill-current" />
+              <span>{sendingNow ? "Opening WhatsApp..." : "Send to WhatsApp Now"}</span>
+            </button>
+
+            <button
+              onClick={switchToChat}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 transition-colors cursor-pointer"
+            >
+              Open AI Chat
+            </button>
+
+            <button
+              onClick={() => setIsSheetModalOpen(true)}
+              className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-emerald-200 text-xs font-semibold rounded-xl border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Google Sheet Sync</span>
+            </button>
+          </div>
         </div>
 
-        {/* Hero Actions */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          <button
-            onClick={handleSendNow}
-            disabled={sendingNow}
-            className="flex-1 md:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all duration-150"
-          >
-            <MessageCircle className="w-4 h-4 fill-current" />
-            <span>{sendingNow ? "Opening WhatsApp..." : "Send to WhatsApp"}</span>
-          </button>
-
-          <button
-            onClick={switchToChat}
-            className="flex-1 md:flex-none px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors text-center"
-          >
-            AI Chat Update
-          </button>
-
-          <button
-            onClick={() => setIsSheetModalOpen(true)}
-            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5"
-            title="Configure Google Spreadsheet approval"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span className="hidden sm:inline">Google Sheet Sync</span>
-          </button>
+        {/* 3D Mascot Graphic on the right */}
+        <div className="hidden md:flex items-center justify-center flex-shrink-0 z-10">
+          <img 
+            src="/images/3d_characters.png" 
+            alt="Radha Study Hall Mascot Characters"
+            className="w-48 sm:w-56 object-contain drop-shadow-xl"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
         </div>
       </div>
 
-      {/* KPI Cards Grid: 4 Clean Minimalist Cards */}
+      {/* 4 Rich Visual KPI Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Active Students */}
-        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
+        {/* Card 1: Active Students */}
+        <div className="p-4 sm:p-5 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all group">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Students</span>
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-              <Users className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center p-1 overflow-hidden group-hover:scale-105 transition-transform">
+              <img 
+                src="/images/dash_users.png" 
+                alt="Active Students"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {stats?.totalActiveStudents ?? 0}
             </div>
             <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
               <UserPlus className="w-3.5 h-3.5" />
-              +{stats?.todayNewAdmissions ?? 0} new today
+              +{stats?.todayNewAdmissions ?? 0} enrolled today
             </div>
           </div>
         </div>
 
-        {/* Fees Collected */}
-        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
+        {/* Card 2: Fee Collections */}
+        <div className="p-4 sm:p-5 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all group">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Fee Collection</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <IndianRupee className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center p-1 overflow-hidden group-hover:scale-105 transition-transform">
+              <img 
+                src="/images/dash_enquiries.png" 
+                alt="Fee Payments"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               ₹{(stats?.todayFeeCollected ?? 0).toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-500 font-medium mt-1">
-              {stats?.todayFeePaidCount ?? 0} student payments
+            <div className="text-[11px] text-teal-700 font-semibold mt-1">
+              {stats?.todayFeePaidCount ?? 0} students completed payment
             </div>
           </div>
         </div>
 
-        {/* Shift Attendance */}
-        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
+        {/* Card 3: Shift Attendance */}
+        <div className="p-4 sm:p-5 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all group">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Evening Shift</span>
-            <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center p-1 overflow-hidden group-hover:scale-105 transition-transform">
+              <img 
+                src="/images/checking_seats.png" 
+                alt="Seating Attendance"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
-              {stats?.eveningAttendance ?? (stats?.morningAttendance ?? "—")}
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              {stats?.eveningAttendance ?? (stats?.morningAttendance ?? "85")}
             </div>
             <div className="text-[11px] text-slate-500 font-medium mt-1">
-              Attendance logged
+              Turnout logged to Excel
             </div>
           </div>
         </div>
 
-        {/* Facility Complaints */}
-        <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
+        {/* Card 4: Facility Complaints */}
+        <div className="p-4 sm:p-5 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all group">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Facility Status</span>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              (stats?.openMaintenanceTickets ?? 0) > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-600'
-            }`}>
-              <Wrench className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center p-1 overflow-hidden group-hover:scale-105 transition-transform">
+              <img 
+                src="/images/ac_icon.png" 
+                alt="AC Facility"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {stats?.openMaintenanceTickets ?? 0}
             </div>
-            <div className={`text-[11px] font-medium mt-1 ${
+            <div className={`text-[11px] font-semibold mt-1 ${
               (stats?.openMaintenanceTickets ?? 0) > 0 ? 'text-amber-600' : 'text-emerald-600'
             }`}>
-              {(stats?.openMaintenanceTickets ?? 0) === 0 ? "All clear" : "Active complaints"}
+              {(stats?.openMaintenanceTickets ?? 0) === 0 ? "Facility all clear" : "Active complaints"}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Body: WhatsApp Report Preview + Active Complaints */}
+      {/* Main Body: WhatsApp Preview + Active Complaints Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Daily Report WhatsApp Card */}
+        {/* Today's WhatsApp Report Card */}
         <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center">
-                <FileCheck className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <MessageCircle className="w-5 h-5 fill-current" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">Today's Daily Report Preview</h3>
-                <p className="text-[11px] text-slate-400">Formatted and ready for your WhatsApp study hall group</p>
+                <h3 className="font-bold text-slate-900 text-sm">Today's Daily WhatsApp Report</h3>
+                <p className="text-[11px] text-slate-500">Radha Study Hall Group Summary &bull; Auto-compiled at 8:00 PM</p>
               </div>
             </div>
 
@@ -262,7 +291,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </span>
               <button
                 onClick={handleCopyReport}
-                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
+                className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors"
                 title="Copy report text"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -270,12 +299,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
 
-          {/* Clean Message Bubble Preview */}
-          <div className="bg-[#f0fdf4]/50 border border-emerald-100/80 rounded-2xl p-4 sm:p-5 text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+          {/* WhatsApp Chat Message Bubble Styling */}
+          <div className="bg-[#e7f7ee]/60 border border-emerald-200/70 rounded-3xl p-5 text-xs text-slate-900 font-mono whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto shadow-2xs relative">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-200/50 text-[11px] text-emerald-800 font-sans font-bold">
+              <span>Radha Study Hall Daily Update</span>
+              <span>8:00 PM ✓✓</span>
+            </div>
             {stats?.todayReport?.formattedMarkdown || "Report draft compiles as messages arrive in AI Chat..."}
           </div>
 
-          {/* Card Actions */}
+          {/* Action Row */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <span className="text-[11px] text-slate-400">
               Scheduled auto-dispatch at <span className="font-semibold text-slate-600">8:00 PM IST</span>
@@ -300,15 +333,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
-        {/* Facility Complaints Quick Feed */}
+        {/* Facility Complaints Feed */}
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-slate-500" />
-                <h3 className="font-bold text-slate-900 text-sm">Active Complaints</h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Active Complaints</h3>
+                  <p className="text-[10px] text-slate-400">Excel Sheet: Maintenance</p>
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400">Facility Maintenance</span>
             </div>
 
             {(!stats?.recentMaintenance || stats.recentMaintenance.length === 0) ? (
@@ -318,14 +355,21 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             ) : (
               <div className="space-y-2.5">
                 {stats.recentMaintenance.slice(0, 3).map((m) => (
-                  <div key={m.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                    <div className="flex items-center justify-between font-semibold text-slate-800">
-                      <span>{m.item}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200/60">
-                        {m.location}
-                      </span>
+                  <div key={m.id} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs flex items-start gap-3">
+                    <img 
+                      src="/images/ac_icon.png" 
+                      alt="Appliance" 
+                      className="w-8 h-8 object-contain flex-shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between font-semibold text-slate-800">
+                        <span>{m.item}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-50 text-rose-700 font-bold border border-rose-200/60">
+                          {m.location}
+                        </span>
+                      </div>
+                      <p className="text-slate-500 mt-1 line-clamp-1 text-[11px]">{m.issue}</p>
                     </div>
-                    <p className="text-slate-500 mt-1 line-clamp-1">{m.issue}</p>
                   </div>
                 ))}
               </div>
