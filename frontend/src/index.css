@@ -47,3 +47,26 @@
 .safe-area-bottom {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
+
+/* Suppress Netlify floating badges and preview drawers that block mobile navigation */
+netlify-drawer,
+[data-netlify-drawer],
+[data-nf-variant],
+[id*="netlify-drawer"],
+[class*="netlify-drawer"],
+[id*="netlify-hud"],
+[class*="netlify-hud"],
+#netlify-badge,
+.netlify-badge,
+iframe[src*="netlify"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  z-index: -1 !important;
+}
