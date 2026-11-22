@@ -1,0 +1,23 @@
+{
+  "name": "Radha Study Hall Operations & Daily Reports",
+  "short_name": "Radha Study Hall",
+  "description": "AI-Powered Study Hall Management, Excel Database & WhatsApp Daily Reporting",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

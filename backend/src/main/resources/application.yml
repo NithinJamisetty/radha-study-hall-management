@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: study-hall-core
+  sql:
+    init:
+      mode: never
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:studyhalldb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+app:
+  ai:
+    provider: ${AI_PROVIDER:builtin} # builtin / openai / gemini
+    openai-api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+  reporting:
+    draft-cron: "0 0 20 * * *" # 8:00 PM IST daily
+    auto-send-cron: "0 15 20 * * *" # 8:15 PM IST fallback
+    telegram-bot-token: ${TELEGRAM_BOT_TOKEN:}
+    telegram-chat-id: ${TELEGRAM_CHAT_ID:}
+    auto-send-enabled: ${AUTO_SEND_ENABLED:true}

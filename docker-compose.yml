@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: studyhall-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: studyhall_db
+      POSTGRES_USER: studyhall_user
+      POSTGRES_PASSWORD: studyhall_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
