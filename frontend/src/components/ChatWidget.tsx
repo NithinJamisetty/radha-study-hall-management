@@ -14,6 +14,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { api, ChatResponse } from '../services/api.ts';
+import { processMessageLocally } from '../services/localAiEngine.ts';
 
 interface ChatWidgetProps {
   onUpdateEvent: () => void;
@@ -77,15 +78,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
       setMessages(prev => [...prev, botMsg]);
       onUpdateEvent();
     } catch (err) {
+      const fallback = processMessageLocally(text);
       setMessages(prev => [
         ...prev,
         {
-          id: 'err-' + Date.now(),
+          id: 'bot-' + Date.now(),
           sender: 'bot',
-          text: "⚠️ Couldn't reach the backend server. Please make sure the service is active on port 8080.",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          text: fallback.reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          extracted: fallback.extracted,
+          isCorrection: fallback.isCorrection
         }
       ]);
+      onUpdateEvent();
     } finally {
       setIsLoading(false);
     }

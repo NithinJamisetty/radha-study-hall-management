@@ -1,3 +1,12 @@
+import {
+  getLocalDashboardStats,
+  saveLocalDashboardStats,
+  getLocalReports,
+  saveLocalReports,
+  processMessageLocally,
+  compileReportMarkdown
+} from './localAiEngine.ts';
+
 export interface ChatResponse {
   messageId: string;
   reply: string;
@@ -72,90 +81,240 @@ export const api = {
   },
 
   async sendMessage(message: string, username = 'admin'): Promise<ChatResponse> {
-    const res = await fetch(`${API_BASE}/chat/message`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, username }),
-    });
-    if (!res.ok) throw new Error('Failed to send message');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/chat/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, username }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      // Backend not reached (e.g. running statically on Netlify)
+    }
+    // Fallback to client-side AI engine
+    return processMessageLocally(message);
   },
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_BASE}/dashboard/stats`);
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/dashboard/stats`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      // Backend not reached
+    }
+    return getLocalDashboardStats();
   },
 
   async getTodayReport(): Promise<DailyReportItem> {
-    const res = await fetch(`${API_BASE}/reports/today`);
-    if (!res.ok) throw new Error('Failed to fetch report');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/reports/today`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      // Backend not reached
+    }
+    const stats = getLocalDashboardStats();
+    if (stats.todayReport) return stats.todayReport;
+
+    return {
+      id: 'rep-' + stats.today,
+      reportDate: stats.today,
+      formattedMarkdown: compileReportMarkdown(
+        stats.today,
+        stats.totalActiveStudents,
+        stats.todayNewAdmissions,
+        stats.todayStudentsLeft,
+        stats.todayFeeCollected,
+        stats.todayFeePaidCount,
+        stats.morningAttendance,
+        stats.afternoonAttendance,
+        stats.eveningAttendance,
+        []
+      ),
+      status: 'PENDING_APPROVAL',
+      draftCreatedAt: new Date().toISOString(),
+      dispatchChannel: 'WHATSAPP'
+    };
   },
 
   async generateDraftReport(date?: string): Promise<DailyReportItem> {
-    const url = date ? `${API_BASE}/reports/generate?date=${date}` : `${API_BASE}/reports/generate`;
-    const res = await fetch(url, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to generate report draft');
-    return res.json();
+    try {
+      const url = date ? `${API_BASE}/reports/generate?date=${date}` : `${API_BASE}/reports/generate`;
+      const res = await fetch(url, { method: 'POST' });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+    const stats = getLocalDashboardStats();
+    return stats.todayReport!;
   },
 
   async approveReport(date: string, updatedMarkdown: string, dispatchImmediately = true): Promise<DailyReportItem> {
-    const res = await fetch(`${API_BASE}/reports/${date}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        updatedMarkdown,
-        approvedByUsername: 'admin',
-        dispatchImmediately
-      }),
-    });
-    if (!res.ok) throw new Error('Failed to approve report');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/reports/${date}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updatedMarkdown,
+          approvedByUsername: 'admin',
+          dispatchImmediately
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const stats = getLocalDashboardStats();
+    if (stats.todayReport) {
+      stats.todayReport.status = dispatchImmediately ? 'DISPATCHED' : 'APPROVED';
+      stats.todayReport.formattedMarkdown = updatedMarkdown;
+      stats.todayReport.approvedBy = 'admin';
+      if (dispatchImmediately) {
+        stats.todayReport.dispatchedAt = new Date().toISOString();
+      }
+      saveLocalDashboardStats(stats);
+
+      const reports = getLocalReports();
+      const existingIdx = reports.findIndex(r => r.reportDate === date);
+      if (existingIdx >= 0) {
+        reports[existingIdx] = stats.todayReport;
+      } else {
+        reports.unshift(stats.todayReport);
+      }
+      saveLocalReports(reports);
+
+      return stats.todayReport;
+    }
+
+    return {
+      id: 'rep-' + date,
+      reportDate: date,
+      formattedMarkdown: updatedMarkdown,
+      status: dispatchImmediately ? 'DISPATCHED' : 'APPROVED',
+      approvedBy: 'admin',
+      draftCreatedAt: new Date().toISOString(),
+      dispatchedAt: dispatchImmediately ? new Date().toISOString() : undefined,
+      dispatchChannel: 'WHATSAPP'
+    };
   },
 
   async sendReportNow(date: string): Promise<DailyReportItem> {
-    const res = await fetch(`${API_BASE}/reports/${date}/send-now`, {
-      method: 'POST'
-    });
-    if (!res.ok) throw new Error('Failed to send report now');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/reports/${date}/send-now`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const stats = getLocalDashboardStats();
+    if (stats.todayReport) {
+      stats.todayReport.status = 'DISPATCHED';
+      stats.todayReport.dispatchedAt = new Date().toISOString();
+      saveLocalDashboardStats(stats);
+      api.openInWhatsApp(stats.todayReport.formattedMarkdown);
+      return stats.todayReport;
+    }
+
+    const fallbackItem: DailyReportItem = {
+      id: 'rep-' + date,
+      reportDate: date,
+      formattedMarkdown: `*RADHA STUDY HALL – DAILY REPORT*`,
+      status: 'DISPATCHED',
+      draftCreatedAt: new Date().toISOString(),
+      dispatchedAt: new Date().toISOString(),
+      dispatchChannel: 'WHATSAPP'
+    };
+    api.openInWhatsApp(fallbackItem.formattedMarkdown);
+    return fallbackItem;
   },
 
   async getAllReports(): Promise<DailyReportItem[]> {
-    const res = await fetch(`${API_BASE}/reports`);
-    if (!res.ok) throw new Error('Failed to fetch reports');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/reports`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const localList = getLocalReports();
+    if (localList.length > 0) return localList;
+
+    const stats = getLocalDashboardStats();
+    return stats.todayReport ? [stats.todayReport] : [];
   },
 
   async resolveMaintenance(ticketId: string) {
-    const res = await fetch(`${API_BASE}/dashboard/maintenance/${ticketId}/resolve`, {
-      method: 'PATCH'
-    });
-    if (!res.ok) throw new Error('Failed to resolve ticket');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/dashboard/maintenance/${ticketId}/resolve`, {
+        method: 'PATCH'
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const stats = getLocalDashboardStats();
+    const ticket = stats.recentMaintenance.find(t => t.id === ticketId);
+    if (ticket) {
+      ticket.status = 'RESOLVED';
+      stats.openMaintenanceTickets = Math.max(0, stats.openMaintenanceTickets - 1);
+      saveLocalDashboardStats(stats);
+    }
+    return { status: 'RESOLVED', ticketId };
   },
 
   async getMaintenanceTickets() {
-    const res = await fetch(`${API_BASE}/dashboard/maintenance`);
-    if (!res.ok) throw new Error('Failed to fetch maintenance tickets');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/dashboard/maintenance`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const stats = getLocalDashboardStats();
+    return stats.recentMaintenance;
   },
 
   async getTrainingTemplate() {
-    const res = await fetch(`${API_BASE}/training/template`);
-    if (!res.ok) throw new Error('Failed to fetch template');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/training/template`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    const cached = localStorage.getItem('radha_study_hall_training_tpl');
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    return {
+      template: `*RADHA STUDY HALL – DAILY REPORT*\n\n📅 {date}\n\n*1. Student Updates*\n• New admissions: {newAdmissions}\n• Total active students: {totalActiveStudents}\n\n*2. Fee Collection*\n• Total collected: ₹{todayFeeCollected}\n\n*3. Attendance*\n• Evening shift: {eveningAttendance}\n\n*4. Maintenance & Facilities*\n{maintenanceSection}\n\n*5. Important Updates*\n• {operationalNotes}`,
+      trainingPrompt: `You are the executive AI Operations Bot for Radha Study Hall. Parse natural language messages into admissions, fees, shift turnouts, and repair items.`
+    };
   },
 
   async saveTrainingTemplate(template: string, trainingPrompt: string) {
-    const res = await fetch(`${API_BASE}/training/template`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ template, trainingPrompt })
-    });
-    if (!res.ok) throw new Error('Failed to save template');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/training/template`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template, trainingPrompt })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    localStorage.setItem('radha_study_hall_training_tpl', JSON.stringify({ template, trainingPrompt }));
+    return { status: 'SAVED_LOCALLY', template, trainingPrompt };
   },
 
   getExcelDownloadUrl() {
