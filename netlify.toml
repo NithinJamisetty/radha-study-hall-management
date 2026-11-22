@@ -1,0 +1,16 @@
+# Netlify Configuration for Radha Study Hall Management
+# This informs Netlify of the base directory, build command, and publish directory
+
+[build]
+  base = "frontend"
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Redirect all routing to index.html for React SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

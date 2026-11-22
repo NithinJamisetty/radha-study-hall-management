@@ -27,11 +27,8 @@ export const MaintenanceList: React.FC = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/dashboard/maintenance');
-      if (res.ok) {
-        const data = await res.json();
-        setTickets(data);
-      }
+      const data = await api.getMaintenanceTickets();
+      setTickets(data);
     } catch (err) {
       console.error(err);
     } finally {

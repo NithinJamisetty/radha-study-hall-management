@@ -7,6 +7,7 @@ import {
   Sliders,
   CheckCircle2
 } from 'lucide-react';
+import { api } from '../services/api.ts';
 
 export const BotTrainingStudio: React.FC = () => {
   const [template, setTemplate] = useState('');
@@ -15,8 +16,7 @@ export const BotTrainingStudio: React.FC = () => {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/training/template')
-      .then(res => res.json())
+    api.getTrainingTemplate()
       .then(data => {
         setTemplate(data.template || '');
         setPromptGuide(data.trainingPrompt || '');
@@ -28,15 +28,9 @@ export const BotTrainingStudio: React.FC = () => {
     setLoading(true);
     setSavedSuccess(false);
     try {
-      const res = await fetch('/api/training/template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ template, trainingPrompt: promptGuide })
-      });
-      if (res.ok) {
-        setSavedSuccess(true);
-        setTimeout(() => setSavedSuccess(false), 3000);
-      }
+      await api.saveTrainingTemplate(template, promptGuide);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
     } catch (err) {
       alert("Failed to save training template");
     } finally {

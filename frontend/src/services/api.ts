@@ -64,9 +64,13 @@ export interface DailyReportItem {
   dispatchChannel: string;
 }
 
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api';
 
 export const api = {
+  getApiBase() {
+    return API_BASE;
+  },
+
   async sendMessage(message: string, username = 'admin'): Promise<ChatResponse> {
     const res = await fetch(`${API_BASE}/chat/message`, {
       method: 'POST',
@@ -129,6 +133,28 @@ export const api = {
       method: 'PATCH'
     });
     if (!res.ok) throw new Error('Failed to resolve ticket');
+    return res.json();
+  },
+
+  async getMaintenanceTickets() {
+    const res = await fetch(`${API_BASE}/dashboard/maintenance`);
+    if (!res.ok) throw new Error('Failed to fetch maintenance tickets');
+    return res.json();
+  },
+
+  async getTrainingTemplate() {
+    const res = await fetch(`${API_BASE}/training/template`);
+    if (!res.ok) throw new Error('Failed to fetch template');
+    return res.json();
+  },
+
+  async saveTrainingTemplate(template: string, trainingPrompt: string) {
+    const res = await fetch(`${API_BASE}/training/template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template, trainingPrompt })
+    });
+    if (!res.ok) throw new Error('Failed to save template');
     return res.json();
   },
 
