@@ -6,6 +6,7 @@ import {
   processMessageLocally,
   compileReportMarkdown
 } from './localAiEngine.ts';
+import { processJarvisMessage } from './jarvisEngine.ts';
 
 export interface ChatResponse {
   messageId: string;
@@ -93,8 +94,8 @@ export const api = {
     } catch (e) {
       // Backend not reached (e.g. running statically on Netlify)
     }
-    // Fallback to client-side AI engine
-    return processMessageLocally(message);
+    // Fallback to autonomous Jarvis self-learning engine
+    return processJarvisMessage(message);
   },
 
   async getDashboardStats(): Promise<DashboardStats> {

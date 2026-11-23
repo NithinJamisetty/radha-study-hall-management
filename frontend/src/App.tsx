@@ -10,6 +10,7 @@ import { ReportHistory } from './components/ReportHistory.tsx';
 import { BotTrainingStudio } from './components/BotTrainingStudio.tsx';
 import { InstallAppModal } from './components/InstallAppModal.tsx';
 import { api, DashboardStats } from './services/api.ts';
+import { notificationService } from './services/notificationService.ts';
 import { RefreshCw, Smartphone, Sparkles, Send, FileText } from 'lucide-react';
 
 export default function App() {
@@ -28,6 +29,12 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  // Initialize Autonomous Radha Jarvis Hourly Mobile Watcher
+  useEffect(() => {
+    notificationService.startHourlyWatcher();
+    return () => notificationService.stopHourlyWatcher();
   }, []);
 
   const loadStats = async () => {

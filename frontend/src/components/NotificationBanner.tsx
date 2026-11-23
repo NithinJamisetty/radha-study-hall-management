@@ -4,9 +4,11 @@ import {
   Clock, 
   MessageCircle, 
   X,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Smartphone
 } from 'lucide-react';
-import { api } from '../services/api.ts';
+import { notificationService, HOURLY_JARVIS_SCHEDULE } from '../services/notificationService.ts';
 
 interface NotificationBannerProps {
   onOpenReport: () => void;
@@ -16,17 +18,16 @@ interface NotificationBannerProps {
 
 export const NotificationBanner: React.FC<NotificationBannerProps> = ({ 
   onOpenReport,
-  reportStatus,
-  reportMarkdown
+  reportStatus
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
-  );
+  const [permission, setPermission] = useState<NotificationPermission>(notificationService.getPermission());
+  const [hourlyEnabled, setHourlyEnabled] = useState(notificationService.isHourlyEnabled());
   const [dismissed, setDismissed] = useState(false);
+  const [testSent, setTestSent] = useState(false);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // 10s check
+    const timer = setInterval(() => setCurrentTime(new Date()), 15000); // 15s check
     return () => clearInterval(timer);
   }, []);
 
@@ -37,62 +38,81 @@ export const NotificationBanner: React.FC<NotificationBannerProps> = ({
   const is8PMWindow = hours === 20 && minutes < 15; // 8:00 PM to 8:14 PM
   const isUnsent = reportStatus !== 'SENT' && reportStatus !== 'AUTO_SENT';
 
-  // Trigger system notification if 8:00 PM arrives
-  useEffect(() => {
-    if (is8PMWindow && isUnsent && notificationPermission === 'granted') {
-      try {
-        if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200]);
-        }
-        new Notification("📚 Radha Study Hall 8:00 PM Report Ready", {
-          body: "Time to review today's study hall report and dispatch to WhatsApp!",
-          icon: "/icon-192.png",
-          tag: "studyhall-8pm-reminder"
-        });
-      } catch (ignored) {}
+  const handleEnableNotifications = async () => {
+    const ok = await notificationService.requestPermission();
+    setPermission(notificationService.getPermission());
+    if (ok) {
+      setHourlyEnabled(true);
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 4000);
     }
-  }, [hours, minutes, isUnsent, notificationPermission]);
+  };
 
-  const requestPermission = async () => {
-    if (typeof Notification !== 'undefined') {
-      const res = await Notification.requestPermission();
-      setNotificationPermission(res);
-      if (res === 'granted') {
-        new Notification("🔔 Daily 8:00 PM Reminders Active", {
-          body: "You'll receive a notification here every evening at 8:00 PM.",
-          icon: "/icon-192.png"
-        });
-      }
-    }
+  const handleSendTestAlert = async () => {
+    setTestSent(true);
+    await notificationService.sendTestNotification();
+    setTimeout(() => setTestSent(false), 4000);
   };
 
   if (dismissed) return null;
 
+  const currentHourSchedule = HOURLY_JARVIS_SCHEDULE[hours];
+
   return (
-    <div className="w-full mb-4 space-y-2">
-      {/* 1. Subtle Notification Permission Pill for Mobile/Tablet */}
-      {notificationPermission !== 'granted' && (
-        <div className="px-4 py-2 bg-white border border-slate-200/80 rounded-2xl text-xs flex items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2.5 text-slate-700">
-            <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-              <Bell className="w-3.5 h-3.5" />
+    <div className="w-full mb-4 space-y-2.5">
+      {/* 1. Mobile Hourly Jarvis Notification Status Bar */}
+      {permission !== 'granted' ? (
+        <div className="px-4 py-2.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 border border-emerald-200/80 rounded-2xl text-xs flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5 text-slate-800">
+            <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <Bell className="w-4 h-4 animate-bounce" />
             </div>
-            <span className="text-[11px] sm:text-xs">
-              Enable notifications to get an alert every day at <strong>8:00 PM</strong> when the report is ready.
-            </span>
+            <div>
+              <div className="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
+                <span>🤖 Enable Hourly Jarvis Mobile Alerts</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-200/60 text-emerald-900 rounded-md font-semibold">
+                  Hourly Mode
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Receive proactive hourly guidance, shift headcount reminders, and the 8:00 PM report alert on your phone.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={requestPermission}
-              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] rounded-lg transition-colors"
+              onClick={handleEnableNotifications}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1"
             >
-              Enable
+              <Smartphone className="w-3.5 h-3.5" />
+              Activate
             </button>
             <button 
               onClick={() => setDismissed(true)} 
-              className="p-1 text-slate-400 hover:text-slate-600 rounded"
+              className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 py-2 bg-white/90 border border-slate-200/80 rounded-2xl text-xs flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5 text-slate-700">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span className="text-[11px] sm:text-xs text-slate-700">
+              <strong className="text-emerald-900">Radha Jarvis Hourly Sentinel:</strong> Active on this device • Next alert at {hours + 1}:00
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSendTestAlert}
+              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-[11px] rounded-lg border border-emerald-200/80 transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              {testSent ? 'Alert Sent! 📱' : 'Test Phone Alert'}
             </button>
           </div>
         </div>
