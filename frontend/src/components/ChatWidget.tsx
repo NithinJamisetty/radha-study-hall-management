@@ -15,13 +15,7 @@ import {
   Copy,
   Check,
   Lightbulb,
-  FileText,
-  Bot,
-  Zap,
-  Settings,
-  Key,
-  ExternalLink,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 import { api, ChatResponse } from '../services/api.ts';
 import { 
@@ -32,12 +26,6 @@ import {
   JarvisMemory,
   processJarvisMessage 
 } from '../services/jarvisEngine.ts';
-import { 
-  getOpenAiConfig, 
-  saveOpenAiConfig, 
-  testOpenAiKey, 
-  OpenAiConfig 
-} from '../services/openAiService.ts';
 
 interface ChatWidgetProps {
   onUpdateEvent: () => void;
@@ -58,35 +46,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     {
       id: 'init-1',
       sender: 'bot',
-      text: "👋 Welcome to Radha Study Hall Assistant! You can message me updates throughout the day—admissions, fee collections, shift attendance, or maintenance complaints. You can also ask for guidance, draft notices, or teach me new rules anytime.",
+      text: "👋 Welcome to Radha Study Hall Assistant! Powered by Open AI Models, I work just like ChatGPT to help you manage operations, answer questions, draft WhatsApp notices, give revenue advice, and log attendance throughout the day.",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
-  const [showOpenAiModal, setShowOpenAiModal] = useState(false);
   const [memories, setMemories] = useState<JarvisMemory[]>([]);
   const [newMemoryText, setNewMemoryText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // OpenAI Configuration State
-  const [openAiConfig, setOpenAiConfig] = useState<OpenAiConfig>(getOpenAiConfig());
-  const [apiKeyInput, setApiKeyInput] = useState(openAiConfig.apiKey);
-  const [modelInput, setModelInput] = useState(openAiConfig.model);
-  const [enabledInput, setEnabledInput] = useState(openAiConfig.isEnabled);
-  const [testingKey, setTestingKey] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMemories(getJarvisMemories());
-    const cfg = getOpenAiConfig();
-    setOpenAiConfig(cfg);
-    setApiKeyInput(cfg.apiKey);
-    setModelInput(cfg.model);
-    setEnabledInput(cfg.isEnabled);
   }, []);
 
   const scrollToBottom = () => {
@@ -116,7 +90,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     if (!textToSend) setInputText('');
     setIsLoading(true);
 
-    // Provide previous chat history to OpenAI for continuous ChatGPT conversation
+    // Provide previous chat history to Open Models for continuous ChatGPT conversation
     const history = messages.map(m => ({
       role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
       text: m.text
@@ -175,36 +149,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     setTimeout(() => setCopiedId(null), 2500);
   };
 
-  const handleSaveOpenAi = async () => {
-    if (enabledInput && apiKeyInput.trim()) {
-      setTestingKey(true);
-      setTestResult(null);
-      const res = await testOpenAiKey(apiKeyInput.trim(), modelInput);
-      setTestingKey(false);
-      setTestResult(res);
-
-      if (res.success) {
-        const newCfg: OpenAiConfig = {
-          apiKey: apiKeyInput.trim(),
-          model: modelInput,
-          isEnabled: true
-        };
-        saveOpenAiConfig(newCfg);
-        setOpenAiConfig(newCfg);
-        setTimeout(() => setShowOpenAiModal(false), 1500);
-      }
-    } else {
-      const newCfg: OpenAiConfig = {
-        apiKey: apiKeyInput.trim(),
-        model: modelInput,
-        isEnabled: false
-      };
-      saveOpenAiConfig(newCfg);
-      setOpenAiConfig(newCfg);
-      setShowOpenAiModal(false);
-    }
-  };
-
   const sampleActionCards = [
     {
       title: "Self-Learning Memory",
@@ -243,7 +187,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] max-w-4xl mx-auto bg-white rounded-3xl shadow-xs border border-slate-200/80 overflow-hidden animate-fade-in relative">
       
-      {/* 1. Header with Model Controls */}
+      {/* 1. Header with Open AI Model Badge */}
       <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -265,45 +209,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
                 Radha Jarvis AI
               </h2>
-              {openAiConfig.isEnabled && openAiConfig.apiKey ? (
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  ChatGPT ({openAiConfig.model})
-                </span>
-              ) : (
-                <span className="text-[10px] bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full border border-slate-200 flex items-center gap-1">
-                  <Brain className="w-2.5 h-2.5 text-emerald-600" />
-                  Autonomous Engine
-                </span>
-              )}
+              <span className="text-[10px] bg-emerald-50 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Open AI Model Active
+              </span>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-              <span>Natural Operations &bull; Study Hall Guidance</span>
+              <span>Natural Operations &bull; ChatGPT Intelligence</span>
             </p>
           </div>
         </div>
 
         {/* Action Controls in Header */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* OpenAI ChatGPT Settings Trigger */}
-          <button
-            onClick={() => {
-              setTestResult(null);
-              setShowOpenAiModal(true);
-            }}
-            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer border ${
-              openAiConfig.isEnabled && openAiConfig.apiKey
-                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
-                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-            }`}
-            title="Configure OpenAI ChatGPT Models"
-          >
-            <Zap className={`w-3.5 h-3.5 ${openAiConfig.isEnabled ? 'text-emerald-600 fill-emerald-600' : 'text-slate-400'}`} />
-            <span className="hidden sm:inline">
-              {openAiConfig.isEnabled ? 'ChatGPT Active' : 'OpenAI Model'}
-            </span>
-          </button>
-
           {/* Memory Bank Trigger */}
           <button
             onClick={() => {
@@ -338,7 +256,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
             <div className="space-y-1 text-center sm:text-left flex-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-white/90 rounded-full text-[11px] font-bold text-emerald-800 border border-emerald-200/60">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
-                {openAiConfig.isEnabled ? `Powered by OpenAI (${openAiConfig.model})` : 'Radha Jarvis Intelligence Engine'}
+                Open AI Models Connected • ChatGPT Intelligence
               </div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900">
                 What would you like me to handle for Radha Study Hall?
@@ -536,7 +454,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
 
               {/* Timestamp */}
               <div className={`text-[10px] text-slate-400 px-1 ${m.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                {m.sender === 'user' ? 'Admin' : (openAiConfig.isEnabled ? `ChatGPT (${openAiConfig.model})` : 'Radha Jarvis')} &bull; {m.timestamp}
+                {m.sender === 'user' ? 'Admin' : 'Radha Jarvis (Open AI Model)'} &bull; {m.timestamp}
               </div>
             </div>
           </div>
@@ -549,7 +467,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-spin" />
             </div>
             <span className="text-xs text-slate-600 font-medium">
-              {openAiConfig.isEnabled ? `Querying OpenAI ${openAiConfig.model}...` : 'Radha Jarvis is processing...'}
+              Generating response with Open AI Models...
             </span>
           </div>
         )}
@@ -586,7 +504,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder={openAiConfig.isEnabled ? `Ask ChatGPT (${openAiConfig.model}) anything or log attendance...` : "Message Radha Jarvis or log daily attendance..."}
+          placeholder="Ask anything like ChatGPT, teach rules, or log shift numbers..."
           className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
         />
         <button
@@ -599,126 +517,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
         </button>
       </div>
 
-      {/* 5. OPENAI CHATGPT MODEL SETTINGS MODAL */}
-      {showOpenAiModal && (
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <Zap className="w-5 h-5 fill-current" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900">
-                    OpenAI ChatGPT Integration
-                  </h3>
-                  <p className="text-[11px] text-emerald-700">
-                    Power Admin Chat with official OpenAI Models
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowOpenAiModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">
-                  OpenAI API Key
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKeyInput(e.target.value)}
-                    placeholder="sk-proj-..."
-                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-                  <span>Get your API key from</span>
-                  <a 
-                    href="https://platform.openai.com/api-keys" 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="text-emerald-700 font-semibold underline inline-flex items-center gap-0.5"
-                  >
-                    platform.openai.com <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </p>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">
-                  Select OpenAI Model
-                </label>
-                <select
-                  value={modelInput}
-                  onChange={(e) => setModelInput(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="gpt-4o-mini">gpt-4o-mini (Recommended • Fast, smart &amp; economical)</option>
-                  <option value="gpt-4o">gpt-4o (Most intelligent flagship model)</option>
-                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy fast model)</option>
-                </select>
-              </div>
-
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <label className="text-xs font-bold text-slate-800 block">
-                    Enable OpenAI ChatGPT
-                  </label>
-                  <span className="text-[10px] text-slate-500">
-                    Switch chat to OpenAI API responses
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={enabledInput}
-                  onChange={(e) => setEnabledInput(e.target.checked)}
-                  className="w-4 h-4 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer"
-                />
-              </div>
-
-              {testResult && (
-                <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
-                  testResult.success
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-800 border border-rose-200'
-                }`}>
-                  {testResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />}
-                  <span>{testResult.message}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setShowOpenAiModal(false)}
-                className="px-4 py-2 text-xs text-slate-600 hover:text-slate-800 font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveOpenAi}
-                disabled={testingKey}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                {testingKey ? <Sparkles className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                <span>{testingKey ? 'Testing Connection...' : 'Save & Connect'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. SLIDE-OVER JARVIS MEMORY BANK MODAL */}
+      {/* 5. SLIDE-OVER JARVIS MEMORY BANK MODAL */}
       {showMemoryModal && (
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90%] flex flex-col shadow-2xl border border-slate-200/80 overflow-hidden">

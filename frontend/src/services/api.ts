@@ -7,7 +7,7 @@ import {
   compileReportMarkdown
 } from './localAiEngine.ts';
 import { processJarvisMessage } from './jarvisEngine.ts';
-import { getOpenAiConfig, callOpenAiChatGPT } from './openAiService.ts';
+import { fetchOpenAiModelResponse } from './openModelService.ts';
 
 export interface ChatResponse {
   messageId: string;
@@ -87,43 +87,17 @@ export const api = {
     username = 'admin',
     history: Array<{ role: 'user' | 'assistant'; text: string }> = []
   ): Promise<ChatResponse> {
-    // 1. If OpenAI ChatGPT is configured by admin, query OpenAI models (gpt-4o / gpt-4o-mini)
-    const openAiConfig = getOpenAiConfig();
-    if (openAiConfig.isEnabled && openAiConfig.apiKey) {
-      try {
-        const openAiResp = await callOpenAiChatGPT(message, history);
-
-        // If operational metrics were detected, sync with Java backend & Excel
-        const hasNumbers = openAiResp.extracted && (
-          openAiResp.extracted.newAdmissions !== undefined ||
-          openAiResp.extracted.feeCollected !== undefined ||
-          openAiResp.extracted.eveningAttendance !== undefined
-        );
-        if (hasNumbers) {
-          fetch(`${API_BASE}/chat/message`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, username }),
-          }).catch(() => {});
-        }
-
-        return openAiResp;
-      } catch (err: any) {
-        console.warn('OpenAI API call failed, falling back to autonomous engine:', err.message);
-      }
-    }
-
-    // 2. Built-in Autonomous Intelligence Engine (Never treats greetings as database notes)
-    const jarvisResponse = processJarvisMessage(message);
+    // 1. Query Open AI Models automatically (Zero configuration / Zero key required)
+    const response = await fetchOpenAiModelResponse(message, history);
 
     // 2. If it contains actual study hall operational data (admissions, fees, shift attendance, repairs),
     // sync to backend & Excel database in background
-    const hasDataToSync = jarvisResponse.extracted && (
-      jarvisResponse.extracted.newAdmissions !== undefined ||
-      jarvisResponse.extracted.feeCollected !== undefined ||
-      jarvisResponse.extracted.eveningAttendance !== undefined ||
-      jarvisResponse.extracted.morningAttendance !== undefined ||
-      (jarvisResponse.extracted.maintenanceItems && jarvisResponse.extracted.maintenanceItems.length > 0)
+    const hasDataToSync = response.extracted && (
+      response.extracted.newAdmissions !== undefined ||
+      response.extracted.feeCollected !== undefined ||
+      response.extracted.eveningAttendance !== undefined ||
+      response.extracted.morningAttendance !== undefined ||
+      (response.extracted.maintenanceItems && response.extracted.maintenanceItems.length > 0)
     );
 
     if (hasDataToSync) {
@@ -138,7 +112,7 @@ export const api = {
       }
     }
 
-    return jarvisResponse;
+    return response;
   },
 
   async getDashboardStats(): Promise<DashboardStats> {
