@@ -11,6 +11,7 @@ import { BotTrainingStudio } from './components/BotTrainingStudio.tsx';
 import { InstallAppModal } from './components/InstallAppModal.tsx';
 import { api, DashboardStats } from './services/api.ts';
 import { notificationService } from './services/notificationService.ts';
+import { JarvisAlertToast } from './components/JarvisAlertToast.tsx';
 import { RefreshCw, Smartphone, Sparkles, Send, FileText } from 'lucide-react';
 
 export default function App() {
@@ -207,6 +208,9 @@ export default function App() {
         onClose={() => setIsInstallModalOpen(false)}
         deferredPrompt={deferredPrompt}
       />
+
+      {/* Floating In-App Jarvis Alert Banner */}
+      <JarvisAlertToast />
     </div>
   );
 }

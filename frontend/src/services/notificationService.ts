@@ -1,16 +1,17 @@
 /**
  * Radha Study Hall Jarvis Notification Engine
- * Manages mobile hourly notifications, system alerts, and background reminders.
+ * Manages mobile hourly notifications, system alerts, audio chimes, and in-app HUD banners.
  */
 
 const STORAGE_KEY_HOURLY_ENABLED = 'radha_jarvis_hourly_enabled_v1';
 const STORAGE_KEY_LAST_NOTIFIED_HOUR = 'radha_jarvis_last_notified_hour_v1';
 
-export interface JarvisHourlyScheduleItem {
-  hour: number;
+export interface JarvisInAppAlert {
+  id: string;
   title: string;
   body: string;
-  actionTag: string;
+  type: 'info' | 'success' | 'warning' | 'hourly';
+  timestamp: string;
 }
 
 export const HOURLY_JARVIS_SCHEDULE: Record<number, { title: string; body: string }> = {
@@ -88,8 +89,40 @@ export const HOURLY_JARVIS_SCHEDULE: Record<number, { title: string; body: strin
   }
 };
 
+/**
+ * High-tech futuristic Jarvis chime using Web Audio API
+ * Generates an instant, zero-latency 2-tone alert chime (587Hz -> 880Hz)
+ * without requiring any external mp3 files.
+ */
+export function playJarvisChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    // Two-tone chime: D5 (587Hz) -> A5 (880Hz)
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.45);
+  } catch (e) {
+    // Audio might be silenced or waiting for user interaction
+  }
+}
+
 class NotificationService {
   private intervalId: any = null;
+  private alertListeners: Array<(alert: JarvisInAppAlert) => void> = [];
 
   isSupported(): boolean {
     return typeof window !== 'undefined' && 'Notification' in window;
@@ -115,8 +148,43 @@ class NotificationService {
     }
   }
 
+  /**
+   * Register a callback to receive in-app floating Jarvis HUD alerts
+   */
+  subscribeAlerts(listener: (alert: JarvisInAppAlert) => void): () => void {
+    this.alertListeners.push(listener);
+    return () => {
+      this.alertListeners = this.alertListeners.filter(l => l !== listener);
+    };
+  }
+
+  emitInAppAlert(title: string, body: string, type: JarvisInAppAlert['type'] = 'info') {
+    const alert: JarvisInAppAlert = {
+      id: 'alert-' + Date.now(),
+      title,
+      body,
+      type,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    this.alertListeners.forEach(listener => {
+      try {
+        listener(alert);
+      } catch (e) {
+        console.warn('Error in alert listener:', e);
+      }
+    });
+  }
+
   async requestPermission(): Promise<boolean> {
-    if (!this.isSupported()) return false;
+    if (!this.isSupported()) {
+      this.emitInAppAlert(
+        '⚠️ Browser Notifications Unsupported',
+        'Your current browser does not support Web Notifications API. On iOS, add this app to your Home Screen first.',
+        'warning'
+      );
+      return false;
+    }
+
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
@@ -124,28 +192,49 @@ class NotificationService {
         this.triggerNotification(
           '🤖 Radha Jarvis Activated!',
           'Hourly mobile alerts and operational guidance are now live on your device.',
-          'jarvis-welcome'
+          'jarvis-welcome',
+          'success'
         );
         return true;
+      } else {
+        this.emitInAppAlert(
+          '⚠️ Notification Permission Denied',
+          'Notifications are blocked in your browser site settings. Tap the lock/tune icon in your address bar to allow alerts.',
+          'warning'
+        );
+        return false;
       }
-      return false;
     } catch (err) {
       console.warn('Failed to request notification permission:', err);
       return false;
     }
   }
 
-  async triggerNotification(title: string, body: string, tag = 'radha-jarvis-alert'): Promise<boolean> {
+  async triggerNotification(
+    title: string, 
+    body: string, 
+    tag = 'radha-jarvis-alert',
+    type: JarvisInAppAlert['type'] = 'hourly'
+  ): Promise<boolean> {
+    // 1. ALWAYS play sound chime
+    playJarvisChime();
+
+    // 2. ALWAYS vibrate phone hardware if supported
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    } catch (e) {}
+
+    // 3. ALWAYS display visible In-App Jarvis HUD banner
+    this.emitInAppAlert(title, body, type);
+
+    // 4. Also trigger system lock-screen notification if granted
     if (!this.isSupported() || Notification.permission !== 'granted') {
-      return false;
+      return true; // Still considered successful via in-app banner
     }
 
     try {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate([150, 75, 150]);
-      }
-
-      // Try ServiceWorker notification first for mobile lock screen display
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'SHOW_NOTIFICATION',
@@ -174,7 +263,6 @@ class NotificationService {
         return true;
       }
 
-      // Fallback to standard Notification
       new Notification(title, {
         body,
         tag,
@@ -182,20 +270,33 @@ class NotificationService {
       });
       return true;
     } catch (e) {
-      console.warn('Notification trigger fallback error:', e);
-      return false;
+      console.warn('Native notification fallback:', e);
+      return true;
     }
   }
 
   async sendTestNotification(): Promise<boolean> {
-    if (this.getPermission() !== 'granted') {
+    const currentPerm = this.getPermission();
+    if (currentPerm !== 'granted') {
       const granted = await this.requestPermission();
-      if (!granted) return false;
+      if (!granted) {
+        // Even if system notifications were denied/blocked in browser settings,
+        // still buzz and fire the In-App HUD alert so the user feels and sees it immediately!
+        this.triggerNotification(
+          '🤖 Radha Jarvis: Test Alert Triggered!',
+          'Jarvis is active! In-App audio chime and vibration verified. (Enable browser notifications in site settings for lock-screen alerts).',
+          'jarvis-test',
+          'info'
+        );
+        return false;
+      }
     }
+
     return this.triggerNotification(
       '🤖 Radha Jarvis: Hourly System Check Active!',
       'Jarvis is online and guarding Radha Study Hall. You will receive real-time operational alerts every hour.',
-      'jarvis-test'
+      'jarvis-test',
+      'success'
     );
   }
 
@@ -205,9 +306,7 @@ class NotificationService {
     }
 
     const checkHourly = () => {
-      if (!this.isHourlyEnabled() || this.getPermission() !== 'granted') {
-        return;
-      }
+      if (!this.isHourlyEnabled()) return;
 
       const now = new Date();
       const currentHour = now.getHours();
@@ -221,24 +320,24 @@ class NotificationService {
 
       const schedule = HOURLY_JARVIS_SCHEDULE[currentHour];
       if (schedule) {
-        this.triggerNotification(schedule.title, schedule.body, `jarvis-hour-${currentHour}`);
+        this.triggerNotification(schedule.title, schedule.body, `jarvis-hour-${currentHour}`, 'hourly');
         localStorage.setItem(STORAGE_KEY_LAST_NOTIFIED_HOUR, hourKey);
       } else {
-        // Fallback for late-night / off-peak hours
         this.triggerNotification(
-          `⏱️ Radha Jarvis Hourly Tick (${currentHour}:00)`,
-          `All systems normal at Radha Study Hall. Total Active Students: 185.`,
-          `jarvis-hour-${currentHour}`
+          `⏱️ Radha Jarvis Hourly Sentinel (${currentHour}:00)`,
+          `All systems normal at Radha Study Hall. 185 Active Students.`,
+          `jarvis-hour-${currentHour}`,
+          'hourly'
         );
         localStorage.setItem(STORAGE_KEY_LAST_NOTIFIED_HOUR, hourKey);
       }
     };
 
-    // Run check immediately on init
+    // Run initial check
     checkHourly();
 
-    // Check every 45 seconds to catch each top-of-the-hour transition reliably
-    this.intervalId = setInterval(checkHourly, 45000);
+    // Check every 30 seconds
+    this.intervalId = setInterval(checkHourly, 30000);
   }
 
   stopHourlyWatcher() {
