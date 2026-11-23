@@ -82,20 +82,33 @@ export const api = {
   },
 
   async sendMessage(message: string, username = 'admin'): Promise<ChatResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/chat/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, username }),
-      });
-      if (res.ok) {
-        return await res.json();
+    // 1. Process directly with autonomous Radha Jarvis 2.0 intelligence
+    // (Never treat greetings or queries as robotic database notes)
+    const jarvisResponse = processJarvisMessage(message);
+
+    // 2. If it contains actual study hall operational data (admissions, fees, shift attendance, repairs),
+    // sync to backend & Excel database in background
+    const hasDataToSync = jarvisResponse.extracted && (
+      jarvisResponse.extracted.newAdmissions !== undefined ||
+      jarvisResponse.extracted.feeCollected !== undefined ||
+      jarvisResponse.extracted.eveningAttendance !== undefined ||
+      jarvisResponse.extracted.morningAttendance !== undefined ||
+      (jarvisResponse.extracted.maintenanceItems && jarvisResponse.extracted.maintenanceItems.length > 0)
+    );
+
+    if (hasDataToSync) {
+      try {
+        await fetch(`${API_BASE}/chat/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, username }),
+        });
+      } catch (e) {
+        // Backend not reached, local persistence already handled
       }
-    } catch (e) {
-      // Backend not reached (e.g. running statically on Netlify)
     }
-    // Fallback to autonomous Jarvis self-learning engine
-    return processJarvisMessage(message);
+
+    return jarvisResponse;
   },
 
   async getDashboardStats(): Promise<DashboardStats> {

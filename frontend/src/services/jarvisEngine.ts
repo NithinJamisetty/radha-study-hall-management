@@ -581,19 +581,35 @@ function handleJarvisChecklist(text: string, lower: string): ChatResponse {
 function handleJarvisGeneralChat(text: string, lower: string): ChatResponse {
   const memories = getJarvisMemories();
 
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower === 'jarvis') {
+  const isGreeting = 
+    lower === 'hi' || 
+    lower === 'hii' || 
+    lower === 'hiii' || 
+    lower === 'hello' || 
+    lower === 'hey' || 
+    lower === 'heyy' || 
+    lower.startsWith('hi ') || 
+    lower.startsWith('hii ') || 
+    lower.startsWith('hello ') || 
+    lower.startsWith('hey ') || 
+    lower.includes('good morning') || 
+    lower.includes('good evening') || 
+    lower.includes('good afternoon') || 
+    lower === 'jarvis';
+
+  if (isGreeting) {
     return {
       messageId: 'msg-' + Date.now(),
       reply: `👋 **Good day, Commander! Radha Jarvis 2.0 is online.**
 
-I am your autonomous study hall copilot. Here is what I can do for you right now:
-• **Autonomous Memory:** Tell me anything to remember (*"Remember the plumber's number is 9876543210"*).
+I am your autonomous study hall copilot. Here is what I can do for you:
+• **Autonomous Memory:** Tell me anything to remember (*"Remember that Wi-Fi password is radha@2026"*).
 • **Operations & Reports:** Log admissions, fee collections, shift turnout, or facility repairs.
 • **Drafting:** Ask me to *"Draft a notice about quiet hours"* or *"Fee reminder message"*.
 • **Strategic Guidance:** Ask *"How can I increase revenue?"* or *"Power saving ideas"*.
 • **Mobile Hourly Alerts:** I monitor Radha Study Hall 24/7 with hourly mobile notifications.
 
-What would you like me to work on?`,
+What would you like me to handle right now?`,
       intent: 'GREETING',
       isCorrection: false,
       extracted: {},

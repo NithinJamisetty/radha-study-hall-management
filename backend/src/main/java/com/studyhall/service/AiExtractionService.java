@@ -49,6 +49,13 @@ public class AiExtractionService {
 
     private ExtractionResult parseWithBuiltInEngine(String text) {
         String lower = text.toLowerCase().trim();
+
+        // 0. Greetings & conversational check (never treat greetings as database notes)
+        if (lower.matches("^(hi|hii|hiii|hello|hey|heyy|namaste|good\\s+(morning|evening|afternoon)|greetings|jarvis)[!.,? ]*$")) {
+            String reply = "👋 Hello! Radha Jarvis 2.0 is online and ready. How can I assist you with Radha Study Hall today?";
+            return new ExtractionResult("GREETING", false, new ChatDtos.StructuredEntities(null, null, null, null, null, null, null, List.of(), List.of()), reply);
+        }
+
         boolean isCorrection = lower.contains("correction") || lower.contains("correct that") || lower.contains("make it") || lower.contains("actually");
 
         Integer newAdmissions = null;
@@ -132,7 +139,7 @@ public class AiExtractionService {
             }
 
             maintenance.add(new ChatDtos.MaintenanceItem(equipment, location, text, "HIGH"));
-        } else if (!lower.contains("joined") && !lower.contains("fee") && !lower.contains("shift") && !lower.contains("attendance")) {
+        } else if (lower.startsWith("note:") || lower.startsWith("note ") || lower.contains("important:") || lower.startsWith("remember ")) {
             notes.add(text);
         }
 
