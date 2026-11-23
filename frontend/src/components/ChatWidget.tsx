@@ -9,18 +9,19 @@ import {
   Wrench, 
   RotateCcw,
   Brain,
-  Bell,
   Trash2,
   Plus,
-  BookOpen,
   X,
   Copy,
   Check,
-  Smartphone,
   Lightbulb,
   FileText,
-  Calculator,
-  ShieldCheck
+  Bot,
+  Zap,
+  Settings,
+  Key,
+  ExternalLink,
+  AlertCircle
 } from 'lucide-react';
 import { api, ChatResponse } from '../services/api.ts';
 import { 
@@ -31,7 +32,12 @@ import {
   JarvisMemory,
   processJarvisMessage 
 } from '../services/jarvisEngine.ts';
-import { notificationService } from '../services/notificationService.ts';
+import { 
+  getOpenAiConfig, 
+  saveOpenAiConfig, 
+  testOpenAiKey, 
+  OpenAiConfig 
+} from '../services/openAiService.ts';
 
 interface ChatWidgetProps {
   onUpdateEvent: () => void;
@@ -59,13 +65,28 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
+  const [showOpenAiModal, setShowOpenAiModal] = useState(false);
   const [memories, setMemories] = useState<JarvisMemory[]>([]);
   const [newMemoryText, setNewMemoryText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // OpenAI Configuration State
+  const [openAiConfig, setOpenAiConfig] = useState<OpenAiConfig>(getOpenAiConfig());
+  const [apiKeyInput, setApiKeyInput] = useState(openAiConfig.apiKey);
+  const [modelInput, setModelInput] = useState(openAiConfig.model);
+  const [enabledInput, setEnabledInput] = useState(openAiConfig.isEnabled);
+  const [testingKey, setTestingKey] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMemories(getJarvisMemories());
+    const cfg = getOpenAiConfig();
+    setOpenAiConfig(cfg);
+    setApiKeyInput(cfg.apiKey);
+    setModelInput(cfg.model);
+    setEnabledInput(cfg.isEnabled);
   }, []);
 
   const scrollToBottom = () => {
@@ -95,8 +116,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     if (!textToSend) setInputText('');
     setIsLoading(true);
 
+    // Provide previous chat history to OpenAI for continuous ChatGPT conversation
+    const history = messages.map(m => ({
+      role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+      text: m.text
+    }));
+
     try {
-      const response = await api.sendMessage(text, 'admin');
+      const response = await api.sendMessage(text, 'admin', history);
       const botMsg: Message = {
         id: 'bot-' + Date.now(),
         sender: 'bot',
@@ -148,6 +175,36 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const handleSaveOpenAi = async () => {
+    if (enabledInput && apiKeyInput.trim()) {
+      setTestingKey(true);
+      setTestResult(null);
+      const res = await testOpenAiKey(apiKeyInput.trim(), modelInput);
+      setTestingKey(false);
+      setTestResult(res);
+
+      if (res.success) {
+        const newCfg: OpenAiConfig = {
+          apiKey: apiKeyInput.trim(),
+          model: modelInput,
+          isEnabled: true
+        };
+        saveOpenAiConfig(newCfg);
+        setOpenAiConfig(newCfg);
+        setTimeout(() => setShowOpenAiModal(false), 1500);
+      }
+    } else {
+      const newCfg: OpenAiConfig = {
+        apiKey: apiKeyInput.trim(),
+        model: modelInput,
+        isEnabled: false
+      };
+      saveOpenAiConfig(newCfg);
+      setOpenAiConfig(newCfg);
+      setShowOpenAiModal(false);
+    }
+  };
+
   const sampleActionCards = [
     {
       title: "Self-Learning Memory",
@@ -186,7 +243,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] max-w-4xl mx-auto bg-white rounded-3xl shadow-xs border border-slate-200/80 overflow-hidden animate-fade-in relative">
       
-      {/* 1. Rich Jarvis AI Header */}
+      {/* 1. Header with Model Controls */}
       <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -206,12 +263,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
-                Radha Jarvis 2.0
+                Radha Jarvis AI
               </h2>
-              <span className="text-[10px] bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full border border-emerald-300/80 flex items-center gap-1">
-                <Brain className="w-2.5 h-2.5 text-emerald-700" />
-                Self-Learning
-              </span>
+              {openAiConfig.isEnabled && openAiConfig.apiKey ? (
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  ChatGPT ({openAiConfig.model})
+                </span>
+              ) : (
+                <span className="text-[10px] bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full border border-slate-200 flex items-center gap-1">
+                  <Brain className="w-2.5 h-2.5 text-emerald-600" />
+                  Autonomous Engine
+                </span>
+              )}
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
               <span>Natural Operations &bull; Study Hall Guidance</span>
@@ -221,6 +285,25 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
 
         {/* Action Controls in Header */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* OpenAI ChatGPT Settings Trigger */}
+          <button
+            onClick={() => {
+              setTestResult(null);
+              setShowOpenAiModal(true);
+            }}
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer border ${
+              openAiConfig.isEnabled && openAiConfig.apiKey
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+            title="Configure OpenAI ChatGPT Models"
+          >
+            <Zap className={`w-3.5 h-3.5 ${openAiConfig.isEnabled ? 'text-emerald-600 fill-emerald-600' : 'text-slate-400'}`} />
+            <span className="hidden sm:inline">
+              {openAiConfig.isEnabled ? 'ChatGPT Active' : 'OpenAI Model'}
+            </span>
+          </button>
+
           {/* Memory Bank Trigger */}
           <button
             onClick={() => {
@@ -255,19 +338,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
             <div className="space-y-1 text-center sm:text-left flex-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-white/90 rounded-full text-[11px] font-bold text-emerald-800 border border-emerald-200/60">
                 <Sparkles className="w-3 h-3 text-emerald-600" />
-                Jarvis Autonomous Operational Engine
+                {openAiConfig.isEnabled ? `Powered by OpenAI (${openAiConfig.model})` : 'Radha Jarvis Intelligence Engine'}
               </div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900">
                 What would you like me to handle for Radha Study Hall?
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Teach me custom rules, ask for revenue growth strategies, draft WhatsApp notices, or log today's admissions and shift attendance.
+                Chat naturally like ChatGPT, teach custom rules, ask for revenue growth strategies, draft WhatsApp notices, or log today's admissions and shift attendance.
               </p>
             </div>
           </div>
         )}
 
-        {/* 4 Interactive Jarvis Action Cards */}
+        {/* 4 Interactive Action Cards */}
         {messages.length <= 2 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {sampleActionCards.map((card, i) => {
@@ -332,7 +415,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                 {/* Formatted Text */}
                 <div className="whitespace-pre-wrap font-normal space-y-1">
                   {m.text.split('\n').map((line, idx) => {
-                    // Render bold headings
                     if (line.startsWith('*') && line.endsWith('*')) {
                       return <p key={idx} className="font-bold text-slate-900">{line.replace(/\*/g, '')}</p>;
                     }
@@ -340,7 +422,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                       return <p key={idx} className="pl-2 text-slate-700">{line}</p>;
                     }
                     if (line.startsWith('```')) {
-                      return null; // Handle code blocks cleanly
+                      return null;
                     }
                     return <p key={idx}>{line}</p>;
                   })}
@@ -352,7 +434,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                     <span className="text-[10px] text-slate-500 font-medium">Ready for WhatsApp Broadcast</span>
                     <button
                       onClick={() => copyToClipboard(m.text, m.id)}
-                      className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       {copiedId === m.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-emerald-600" />}
                       <span>{copiedId === m.id ? 'Copied!' : 'Copy Notice'}</span>
@@ -454,7 +536,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
 
               {/* Timestamp */}
               <div className={`text-[10px] text-slate-400 px-1 ${m.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                {m.sender === 'user' ? 'Admin' : 'Radha Jarvis 2.0'} &bull; {m.timestamp}
+                {m.sender === 'user' ? 'Admin' : (openAiConfig.isEnabled ? `ChatGPT (${openAiConfig.model})` : 'Radha Jarvis')} &bull; {m.timestamp}
               </div>
             </div>
           </div>
@@ -464,29 +546,28 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
         {isLoading && (
           <div className="flex items-center gap-3 bg-white p-3.5 rounded-2xl w-fit border border-slate-200/70 shadow-xs animate-pulse">
             <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-              <Brain className="w-3.5 h-3.5 text-emerald-600 animate-spin" />
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-spin" />
             </div>
             <span className="text-xs text-slate-600 font-medium">
-              Radha Jarvis is analyzing and executing...
+              {openAiConfig.isEnabled ? `Querying OpenAI ${openAiConfig.model}...` : 'Radha Jarvis is processing...'}
             </span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 3. Dynamic Jarvis Quick Prompts Bar */}
+      {/* 3. Quick Prompts Bar */}
       <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex-shrink-0">
-          Jarvis Commands:
+          Try Saying:
         </span>
         {[
-          "Remember that Wi-Fi password is radha@2026",
-          "Give suggestions to increase occupancy & revenue",
+          "Today 5 new students joined",
+          "Collected fees from 12 students with ₹12,500 total",
+          "Evening shift attendance was 85",
           "Draft a notice for quiet hours after 9 PM",
-          "Calculate monthly profit for 185 students at ₹1,800",
-          "Show me what you have learned in memory",
-          "Morning opening checklist for staff",
-          "Today 5 new students joined and evening shift was 85"
+          "Give suggestions to increase occupancy",
+          "AC in Room 2 is not working"
         ].map((p, idx) => (
           <button
             key={idx}
@@ -505,7 +586,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask Jarvis anything, teach a rule, or log shift numbers..."
+          placeholder={openAiConfig.isEnabled ? `Ask ChatGPT (${openAiConfig.model}) anything or log attendance...` : "Message Radha Jarvis or log daily attendance..."}
           className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
         />
         <button
@@ -518,11 +599,129 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
         </button>
       </div>
 
-      {/* 5. SLIDE-OVER JARVIS MEMORY BANK MODAL */}
+      {/* 5. OPENAI CHATGPT MODEL SETTINGS MODAL */}
+      {showOpenAiModal && (
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Zap className="w-5 h-5 fill-current" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">
+                    OpenAI ChatGPT Integration
+                  </h3>
+                  <p className="text-[11px] text-emerald-700">
+                    Power Admin Chat with official OpenAI Models
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowOpenAiModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-800 block mb-1">
+                  OpenAI API Key
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="sk-proj-..."
+                    className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                  <span>Get your API key from</span>
+                  <a 
+                    href="https://platform.openai.com/api-keys" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-emerald-700 font-semibold underline inline-flex items-center gap-0.5"
+                  >
+                    platform.openai.com <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-800 block mb-1">
+                  Select OpenAI Model
+                </label>
+                <select
+                  value={modelInput}
+                  onChange={(e) => setModelInput(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="gpt-4o-mini">gpt-4o-mini (Recommended • Fast, smart &amp; economical)</option>
+                  <option value="gpt-4o">gpt-4o (Most intelligent flagship model)</option>
+                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy fast model)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block">
+                    Enable OpenAI ChatGPT
+                  </label>
+                  <span className="text-[10px] text-slate-500">
+                    Switch chat to OpenAI API responses
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={enabledInput}
+                  onChange={(e) => setEnabledInput(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer"
+                />
+              </div>
+
+              {testResult && (
+                <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
+                  testResult.success
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                }`}>
+                  {testResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />}
+                  <span>{testResult.message}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowOpenAiModal(false)}
+                className="px-4 py-2 text-xs text-slate-600 hover:text-slate-800 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveOpenAi}
+                disabled={testingKey}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                {testingKey ? <Sparkles className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>{testingKey ? 'Testing Connection...' : 'Save & Connect'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. SLIDE-OVER JARVIS MEMORY BANK MODAL */}
       {showMemoryModal && (
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90%] flex flex-col shadow-2xl border border-slate-200/80 overflow-hidden">
-            {/* Modal Header */}
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50/50 to-indigo-50/50">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
@@ -545,7 +744,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               </button>
             </div>
 
-            {/* Manual Teaching Input */}
             <div className="p-4 bg-slate-50 border-b border-slate-100">
               <label className="text-[11px] font-bold text-slate-700 block mb-1">
                 Teach Jarvis a New Rule or Operational Fact:
@@ -562,7 +760,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                 <button
                   onClick={handleAddManualMemory}
                   disabled={!newMemoryText.trim()}
-                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Save
@@ -570,9 +768,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               </div>
             </div>
 
-            {/* Memories List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {memories.map((m, idx) => (
+              {memories.map((m) => (
                 <div 
                   key={m.id}
                   className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs hover:border-purple-200 transition-all flex items-start justify-between gap-3 group"
@@ -594,7 +791,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
 
                   <button
                     onClick={() => handleDeleteMemory(m.id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     title="Delete Memory"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -603,7 +800,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               ))}
             </div>
 
-            {/* Modal Footer */}
             <div className="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs">
               <button
                 onClick={() => {
@@ -611,13 +807,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
                     setMemories(clearJarvisMemories());
                   }
                 }}
-                className="text-[11px] text-rose-600 hover:underline"
+                className="text-[11px] text-rose-600 hover:underline cursor-pointer"
               >
                 Reset to Defaults
               </button>
               <button
                 onClick={() => setShowMemoryModal(false)}
-                className="px-4 py-1.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors"
+                className="px-4 py-1.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Close
               </button>

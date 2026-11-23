@@ -7,6 +7,7 @@ import {
   compileReportMarkdown
 } from './localAiEngine.ts';
 import { processJarvisMessage } from './jarvisEngine.ts';
+import { getOpenAiConfig, callOpenAiChatGPT } from './openAiService.ts';
 
 export interface ChatResponse {
   messageId: string;
@@ -81,9 +82,38 @@ export const api = {
     return API_BASE;
   },
 
-  async sendMessage(message: string, username = 'admin'): Promise<ChatResponse> {
-    // 1. Process directly with autonomous Radha Jarvis 2.0 intelligence
-    // (Never treat greetings or queries as robotic database notes)
+  async sendMessage(
+    message: string, 
+    username = 'admin',
+    history: Array<{ role: 'user' | 'assistant'; text: string }> = []
+  ): Promise<ChatResponse> {
+    // 1. If OpenAI ChatGPT is configured by admin, query OpenAI models (gpt-4o / gpt-4o-mini)
+    const openAiConfig = getOpenAiConfig();
+    if (openAiConfig.isEnabled && openAiConfig.apiKey) {
+      try {
+        const openAiResp = await callOpenAiChatGPT(message, history);
+
+        // If operational metrics were detected, sync with Java backend & Excel
+        const hasNumbers = openAiResp.extracted && (
+          openAiResp.extracted.newAdmissions !== undefined ||
+          openAiResp.extracted.feeCollected !== undefined ||
+          openAiResp.extracted.eveningAttendance !== undefined
+        );
+        if (hasNumbers) {
+          fetch(`${API_BASE}/chat/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, username }),
+          }).catch(() => {});
+        }
+
+        return openAiResp;
+      } catch (err: any) {
+        console.warn('OpenAI API call failed, falling back to autonomous engine:', err.message);
+      }
+    }
+
+    // 2. Built-in Autonomous Intelligence Engine (Never treats greetings as database notes)
     const jarvisResponse = processJarvisMessage(message);
 
     // 2. If it contains actual study hall operational data (admissions, fees, shift attendance, repairs),
