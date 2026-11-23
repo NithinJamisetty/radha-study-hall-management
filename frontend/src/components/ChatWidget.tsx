@@ -52,7 +52,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     {
       id: 'init-1',
       sender: 'bot',
-      text: "👋 **Greetings! Radha Jarvis 2.0 is online.**\n\nI am your autonomous study hall copilot. I continuously learn from your instructions, remember operational rules, draft notices, calculate revenues, provide strategic suggestions, and guard Radha Study Hall with hourly mobile alerts.\n\n*Try saying anything:* e.g., *\"Remember that Wi-Fi password is radha123\"*, *\"Give me suggestions to increase occupancy\"*, or *\"Draft a notice about quiet hours\"*.",
+      text: "👋 Welcome to Radha Study Hall Assistant! You can message me updates throughout the day—admissions, fee collections, shift attendance, or maintenance complaints. You can also ask for guidance, draft notices, or teach me new rules anytime.",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -62,7 +62,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
   const [memories, setMemories] = useState<JarvisMemory[]>([]);
   const [newMemoryText, setNewMemoryText] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [testAlertSent, setTestAlertSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,12 +142,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
     setMemories(updated);
   };
 
-  const handleTestAlert = async () => {
-    setTestAlertSent(true);
-    await notificationService.sendTestNotification();
-    setTimeout(() => setTestAlertSent(false), 3000);
-  };
-
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -221,7 +214,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
               </span>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-              <span>Autonomous Study Hall Copilot • Hourly Sentinel Active</span>
+              <span>Natural Operations &bull; Study Hall Guidance</span>
             </p>
           </div>
         </div>
@@ -242,16 +235,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ onUpdateEvent }) => {
             <span className="px-1.5 py-0.2 bg-purple-200 text-purple-800 rounded-full text-[10px]">
               {memories.length}
             </span>
-          </button>
-
-          {/* Test Mobile Alert Button */}
-          <button
-            onClick={handleTestAlert}
-            className="px-2.5 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            title="Trigger Instant Phone Notification"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden sm:inline">{testAlertSent ? 'Alert Sent!' : 'Test Alert'}</span>
           </button>
         </div>
       </div>
