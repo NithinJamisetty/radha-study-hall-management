@@ -4,18 +4,15 @@ import { MobileBottomNav } from './components/MobileBottomNav.tsx';
 import { NotificationBanner } from './components/NotificationBanner.tsx';
 import { DashboardOverview } from './components/DashboardOverview.tsx';
 import { ChatWidget } from './components/ChatWidget.tsx';
-import { AutomationStudio } from './components/AutomationStudio.tsx';
-import { ActivityUniverse } from './components/ActivityUniverse.tsx';
 import { ReportReviewModal } from './components/ReportReviewModal.tsx';
 import { MaintenanceList } from './components/MaintenanceList.tsx';
 import { ReportHistory } from './components/ReportHistory.tsx';
 import { BotTrainingStudio } from './components/BotTrainingStudio.tsx';
 import { InstallAppModal } from './components/InstallAppModal.tsx';
-import { FloatingActionIsland } from './components/FloatingActionIsland.tsx';
 import { api, DashboardStats } from './services/api.ts';
 import { notificationService } from './services/notificationService.ts';
 import { JarvisAlertToast } from './components/JarvisAlertToast.tsx';
-import { RefreshCw, Smartphone, Sparkles, Send, FileText } from 'lucide-react';
+import { RefreshCw, Smartphone, FileText } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -91,7 +88,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-900 overflow-hidden">
-      {/* Desktop Sidebar (hidden on mobile/tablet) */}
+      {/* Desktop Sidebar */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -118,19 +115,12 @@ export default function App() {
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight">
-                  Radha Study Hall
-                </h1>
-                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md">
-                  OS
-                </span>
-              </div>
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">
+                Radha Study Hall
+              </h1>
               <p className="text-[11px] text-emerald-600 font-semibold capitalize">
-                {activeTab === 'dashboard' && 'Bento Command Center'}
-                {activeTab === 'chat' && 'AI Copilot (Open AI Models)'}
-                {activeTab === 'automation' && 'Workflow Studio & Triggers'}
-                {activeTab === 'activity' && 'Live Activity Universe'}
+                {activeTab === 'dashboard' && 'Dashboard Overview'}
+                {activeTab === 'chat' && 'AI Chat Assistant'}
                 {activeTab === 'training' && 'Bot Report Studio'}
                 {activeTab === 'reports' && 'WhatsApp Daily Reports'}
                 {activeTab === 'maintenance' && 'Facility Repairs'}
@@ -168,8 +158,8 @@ export default function App() {
           </div>
         </header>
 
-        {/* View Router with Bottom Padding for Mobile Nav */}
-        <main className="flex-1 p-3.5 sm:p-6 overflow-y-auto pb-24 lg:pb-8">
+        {/* View Router */}
+        <main className="flex-1 p-3.5 sm:p-6 overflow-y-auto pb-20 lg:pb-8">
           {/* 8:00 PM Notification & Status Banner */}
           <NotificationBanner
             onOpenReport={() => setIsModalOpen(true)}
@@ -191,14 +181,6 @@ export default function App() {
             <ChatWidget onUpdateEvent={loadStats} />
           )}
 
-          {activeTab === 'automation' && (
-            <AutomationStudio />
-          )}
-
-          {activeTab === 'activity' && (
-            <ActivityUniverse stats={stats} />
-          )}
-
           {activeTab === 'training' && <BotTrainingStudio />}
 
           {activeTab === 'reports' && <ReportHistory />}
@@ -211,12 +193,6 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           pendingCount={stats?.todayReport?.status === 'PENDING_APPROVAL' ? 1 : 0}
-        />
-
-        {/* Floating Speed Dial Action Island (FAB) */}
-        <FloatingActionIsland
-          onNavigateTab={(tab: string) => setActiveTab(tab as TabType)}
-          onRefresh={loadStats}
         />
       </div>
 

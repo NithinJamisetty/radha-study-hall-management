@@ -2,9 +2,9 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   MessageSquareText, 
-  Zap, 
-  Activity,
-  FileText
+  FileText, 
+  Wrench,
+  Sliders
 } from 'lucide-react';
 import { TabType } from './Sidebar.tsx';
 
@@ -20,11 +20,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   pendingCount 
 }) => {
   const navItems = [
-    { id: 'dashboard' as TabType, label: 'Command', icon: LayoutDashboard },
-    { id: 'chat' as TabType, label: 'Jarvis AI', icon: MessageSquareText, badge: true },
-    { id: 'automation' as TabType, label: 'Automations', icon: Zap },
-    { id: 'activity' as TabType, label: 'Activity', icon: Activity },
-    { id: 'reports' as TabType, label: '8 PM Reports', icon: FileText, pending: pendingCount > 0 },
+    { id: 'dashboard' as TabType, label: 'Overview', icon: LayoutDashboard },
+    { id: 'chat' as TabType, label: 'AI Chat', icon: MessageSquareText, badge: true },
+    { id: 'reports' as TabType, label: 'Reports', icon: FileText, pending: pendingCount > 0 },
+    { id: 'maintenance' as TabType, label: 'Repairs', icon: Wrench },
+    { id: 'training' as TabType, label: 'Studio', icon: Sliders },
   ];
 
   return (
@@ -37,7 +37,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all duration-200 relative ${
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all duration-200 relative cursor-pointer ${
                 isActive 
                   ? 'text-emerald-700 font-semibold scale-105' 
                   : 'text-slate-400 hover:text-slate-600'
