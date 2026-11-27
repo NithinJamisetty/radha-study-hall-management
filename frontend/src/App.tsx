@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar.tsx';
+import { Sidebar, TabType } from './components/Sidebar.tsx';
 import { MobileBottomNav } from './components/MobileBottomNav.tsx';
 import { NotificationBanner } from './components/NotificationBanner.tsx';
 import { DashboardOverview } from './components/DashboardOverview.tsx';
 import { ChatWidget } from './components/ChatWidget.tsx';
+import { SmartSeatMap } from './components/SmartSeatMap.tsx';
+import { AutomationStudio } from './components/AutomationStudio.tsx';
+import { ActivityUniverse } from './components/ActivityUniverse.tsx';
 import { ReportReviewModal } from './components/ReportReviewModal.tsx';
 import { MaintenanceList } from './components/MaintenanceList.tsx';
 import { ReportHistory } from './components/ReportHistory.tsx';
 import { BotTrainingStudio } from './components/BotTrainingStudio.tsx';
 import { InstallAppModal } from './components/InstallAppModal.tsx';
+import { FloatingActionIsland } from './components/FloatingActionIsland.tsx';
 import { api, DashboardStats } from './services/api.ts';
 import { notificationService } from './services/notificationService.ts';
 import { JarvisAlertToast } from './components/JarvisAlertToast.tsx';
 import { RefreshCw, Smartphone, Sparkles, Send, FileText } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'reports' | 'maintenance' | 'training'>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -115,12 +119,20 @@ export default function App() {
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
             <div>
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">
-                Radha Study Hall
-              </h1>
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight">
+                  Radha Study Hall
+                </h1>
+                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-md">
+                  OS
+                </span>
+              </div>
               <p className="text-[11px] text-emerald-600 font-semibold capitalize">
-                {activeTab === 'dashboard' && 'Dashboard Overview'}
-                {activeTab === 'chat' && 'AI Chat Assistant'}
+                {activeTab === 'dashboard' && 'Bento Command Center'}
+                {activeTab === 'chat' && 'AI Copilot (Open AI Models)'}
+                {activeTab === 'seats' && 'Spatial 220-Seat Map'}
+                {activeTab === 'automation' && 'Workflow Studio & Triggers'}
+                {activeTab === 'activity' && 'Live Activity Universe'}
                 {activeTab === 'training' && 'Bot Report Studio'}
                 {activeTab === 'reports' && 'WhatsApp Daily Reports'}
                 {activeTab === 'maintenance' && 'Facility Repairs'}
@@ -132,7 +144,7 @@ export default function App() {
             {/* Quick Report Review Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 font-semibold text-xs rounded-xl border border-emerald-200/70 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 font-semibold text-xs rounded-xl border border-emerald-200/70 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Preview</span> 8 PM Report
@@ -141,7 +153,7 @@ export default function App() {
             {/* Install PWA Button */}
             <button
               onClick={() => setIsInstallModalOpen(true)}
-              className="hidden sm:flex px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs rounded-xl items-center gap-1.5 transition-colors"
+              className="hidden sm:flex px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold text-xs rounded-xl items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Install App</span>
@@ -151,7 +163,7 @@ export default function App() {
               onClick={loadStats}
               disabled={refreshing}
               title="Refresh Live Data"
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
             </button>
@@ -159,7 +171,7 @@ export default function App() {
         </header>
 
         {/* View Router with Bottom Padding for Mobile Nav */}
-        <main className="flex-1 p-3.5 sm:p-6 overflow-y-auto pb-20 lg:pb-8">
+        <main className="flex-1 p-3.5 sm:p-6 overflow-y-auto pb-24 lg:pb-8">
           {/* 8:00 PM Notification & Status Banner */}
           <NotificationBanner
             onOpenReport={() => setIsModalOpen(true)}
@@ -173,11 +185,24 @@ export default function App() {
               openReviewModal={() => setIsModalOpen(true)}
               switchToChat={() => setActiveTab('chat')}
               onRefresh={loadStats}
+              onNavigateTab={(tab: string) => setActiveTab(tab as TabType)}
             />
           )}
 
           {activeTab === 'chat' && (
             <ChatWidget onUpdateEvent={loadStats} />
+          )}
+
+          {activeTab === 'seats' && (
+            <SmartSeatMap />
+          )}
+
+          {activeTab === 'automation' && (
+            <AutomationStudio />
+          )}
+
+          {activeTab === 'activity' && (
+            <ActivityUniverse stats={stats} />
           )}
 
           {activeTab === 'training' && <BotTrainingStudio />}
@@ -192,6 +217,12 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           pendingCount={stats?.todayReport?.status === 'PENDING_APPROVAL' ? 1 : 0}
+        />
+
+        {/* Floating Speed Dial Action Island (FAB) */}
+        <FloatingActionIsland
+          onNavigateTab={(tab: string) => setActiveTab(tab as TabType)}
+          onRefresh={loadStats}
         />
       </div>
 
