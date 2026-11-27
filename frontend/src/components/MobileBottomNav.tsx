@@ -2,8 +2,8 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   MessageSquareText, 
-  Armchair, 
   Zap, 
+  Activity,
   FileText
 } from 'lucide-react';
 import { TabType } from './Sidebar.tsx';
@@ -22,8 +22,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const navItems = [
     { id: 'dashboard' as TabType, label: 'Command', icon: LayoutDashboard },
     { id: 'chat' as TabType, label: 'Jarvis AI', icon: MessageSquareText, badge: true },
-    { id: 'seats' as TabType, label: 'Seats (220)', icon: Armchair },
     { id: 'automation' as TabType, label: 'Automations', icon: Zap },
+    { id: 'activity' as TabType, label: 'Activity', icon: Activity },
     { id: 'reports' as TabType, label: '8 PM Reports', icon: FileText, pending: pendingCount > 0 },
   ];
 

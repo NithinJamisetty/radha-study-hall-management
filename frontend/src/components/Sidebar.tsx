@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api.ts';
 
-export type TabType = 'dashboard' | 'chat' | 'seats' | 'automation' | 'activity' | 'reports' | 'maintenance' | 'training';
+export type TabType = 'dashboard' | 'chat' | 'automation' | 'activity' | 'reports' | 'maintenance' | 'training';
 
 interface SidebarProps {
   activeTab: TabType;
@@ -89,23 +89,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-400/20">
             ChatGPT
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('seats')}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
-            activeTab === 'seats' 
-              ? 'bg-emerald-600 text-white shadow-sm' 
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <Armchair className="w-4 h-4" />
-            Smart Seats (220)
-          </div>
-          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full">
-            Spatial
           </span>
         </button>
 

@@ -218,13 +218,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
-        {/* Bento Widget: Spatial Smart Seats Progress Ring */}
+        {/* Bento Widget: Active Students Overview */}
         <div 
-          onClick={() => onNavigateTab && onNavigateTab('seats')}
+          onClick={switchToChat}
           className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Spatial Capacity</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Students</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Users className="w-4 h-4" />
             </div>
@@ -235,7 +235,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                 {activeStudents}
               </span>
-              <span className="text-xs text-slate-400 ml-1 font-semibold">/ {totalSeats} seats</span>
+              <span className="text-xs text-slate-400 ml-1 font-semibold">/ {totalSeats} capacity</span>
               <p className="text-[11px] text-emerald-600 font-bold mt-0.5">
                 +{stats?.todayNewAdmissions || 5} enrolled today
               </p>
@@ -266,7 +266,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-            <span>View 220 Seat Grid</span>
+            <span>Enrol New Student</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>

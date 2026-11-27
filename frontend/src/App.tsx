@@ -4,7 +4,6 @@ import { MobileBottomNav } from './components/MobileBottomNav.tsx';
 import { NotificationBanner } from './components/NotificationBanner.tsx';
 import { DashboardOverview } from './components/DashboardOverview.tsx';
 import { ChatWidget } from './components/ChatWidget.tsx';
-import { SmartSeatMap } from './components/SmartSeatMap.tsx';
 import { AutomationStudio } from './components/AutomationStudio.tsx';
 import { ActivityUniverse } from './components/ActivityUniverse.tsx';
 import { ReportReviewModal } from './components/ReportReviewModal.tsx';
@@ -130,7 +129,6 @@ export default function App() {
               <p className="text-[11px] text-emerald-600 font-semibold capitalize">
                 {activeTab === 'dashboard' && 'Bento Command Center'}
                 {activeTab === 'chat' && 'AI Copilot (Open AI Models)'}
-                {activeTab === 'seats' && 'Spatial 220-Seat Map'}
                 {activeTab === 'automation' && 'Workflow Studio & Triggers'}
                 {activeTab === 'activity' && 'Live Activity Universe'}
                 {activeTab === 'training' && 'Bot Report Studio'}
@@ -191,10 +189,6 @@ export default function App() {
 
           {activeTab === 'chat' && (
             <ChatWidget onUpdateEvent={loadStats} />
-          )}
-
-          {activeTab === 'seats' && (
-            <SmartSeatMap />
           )}
 
           {activeTab === 'automation' && (
